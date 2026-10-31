@@ -1,0 +1,12 @@
+# Identifiants (ne jamais versionner)
+.env
+.env.*
+
+# Notes de veille générées
+veille_sociale_*.docx
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

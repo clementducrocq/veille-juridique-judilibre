@@ -1,0 +1,48 @@
+name: Veille juridique hebdomadaire
+
+on:
+  schedule:
+    # Tous les lundis à 06:00 UTC (soit 08:00 à Paris en été, 07:00 en hiver).
+    - cron: "0 6 * * 1"
+  workflow_dispatch:   # permet aussi de lancer la veille manuellement depuis l'onglet "Actions"
+
+# Droits minimaux : le workflow n'a besoin que de lire le code du dépôt.
+permissions:
+  contents: read
+
+jobs:
+  veille:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Générer la veille et l'envoyer par e-mail
+        env:
+          JUDILIBRE_ENV: production
+          JUDILIBRE_DAYS: "7"
+          JUDILIBRE_CLIENT_ID: ${{ secrets.JUDILIBRE_CLIENT_ID }}
+          JUDILIBRE_CLIENT_SECRET: ${{ secrets.JUDILIBRE_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python veille_sociale.py
+
+      - name: Archiver la note Word (sauvegarde téléchargeable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: veille-word
+          path: veille_sociale_*.docx
+          if-no-files-found: ignore
